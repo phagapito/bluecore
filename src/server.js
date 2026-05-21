@@ -178,7 +178,12 @@ app.get('/mobile/icon-512.svg', (req, res) => { res.setHeader('Content-Type','im
 
 // FRONTEND
 const HTML = require('./frontend');
-app.get('*', (req, res) => res.send(HTML));
+app.get('*', (req, res) => {
+  const ua = req.headers['user-agent'] || '';
+  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(ua);
+  if (isMobile && req.path === '/') return res.redirect('/mobile');
+  res.send(HTML);
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
