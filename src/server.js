@@ -158,10 +158,16 @@ app.put('/api/mobile/permutas/:id/responder', auth, ctrl.responderPermuta);
 app.put('/api/mobile/permutas/:id/cancelar',  auth, ctrl.cancelarPermuta);
 
 // MOBILE — agente vê os próprios dados (qualquer perfil autenticado)
-app.get('/api/mobile/meu-banco-horas',    auth, ctrl.meuBancoHoras);
-app.get('/api/mobile/minhas-ferias',      auth, ctrl.minhasFerias);
-app.get('/api/mobile/minhas-audiencias',  auth, ctrl.minhasAudiencias);
-app.get('/api/mobile/meus-materiais',     auth, ctrl.meusMateriaisCautelados);
+app.get('/api/mobile/meu-banco-horas',       auth, ctrl.meuBancoHoras);
+app.get('/api/mobile/minhas-ferias',         auth, ctrl.minhasFerias);
+app.get('/api/mobile/minhas-audiencias',     auth, ctrl.minhasAudiencias);
+app.get('/api/mobile/meus-materiais',        auth, ctrl.meusMateriaisCautelados);
+// MOBILE FROTA — rotas sem restrição de módulo (todo agente pode cautelar viatura)
+app.get('/api/mobile/viaturas',              auth, ctrl.listarViaturas);
+app.get('/api/mobile/cautelas/ativas',       auth, ctrl.listarCautelasAtivas);
+app.post('/api/mobile/cautelas',             auth, ctrl.abrirCautela);
+app.put('/api/mobile/cautelas/:id/encerrar', auth, ctrl.encerrarCautela);
+app.post('/api/mobile/abastecimentos',       auth, ctrl.criarAbastecimento);
 
 // AUDITORIA - admin only
 app.get('/api/auditoria', auth, perfil('administrador'), ctrl.listarAuditoria);

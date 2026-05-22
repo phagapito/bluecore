@@ -348,8 +348,8 @@ function bindHome(){
 function loadHomeData(){
   var mes=curMesAno();
   Promise.all([
-    api('GET','/api/frota/cautelas/ativas').catch(function(){return {data:[]};}),
-    api('GET','/api/frota/viaturas?status=disponivel').catch(function(){return {data:[]};}),
+    api('GET','/api/mobile/cautelas/ativas').catch(function(){return {data:[]};}),
+    api('GET','/api/mobile/viaturas?status=disponivel').catch(function(){return {data:[]};}),
     api('GET','/api/escalas/minha?mes_ano='+mes).catch(function(){return {data:[]};}),
     api('GET','/api/mobile/minhas-ferias').catch(function(){return {data:[]};}),
     api('GET','/api/mobile/minhas-audiencias').catch(function(){return {data:[]};}),
@@ -564,7 +564,7 @@ function bindFrota(){
   if(ok3)ok3.onclick=function(){
     if(!CK.every(function(i){return STATE.checklist[i];})){toast('Complete o checklist','er');return;}
     ok3.disabled=true;ok3.textContent='Registrando...';
-    api('POST','/api/frota/cautelas',{viatura_id:STATE.selViatura.id,km_inicial:parseInt(STATE.form.km),nivel_combustivel_inicial:STATE.form.nivel,checklist_json:STATE.checklist,motorista_id:STATE.agente.id})
+    api('POST','/api/mobile/cautelas',{viatura_id:STATE.selViatura.id,km_inicial:parseInt(STATE.form.km),nivel_combustivel_inicial:STATE.form.nivel,checklist_json:STATE.checklist,motorista_id:STATE.agente.id})
       .then(function(){toast('Cautela registrada!');STATE.cautelaAtiva=null;STATE.step=1;STATE.form={};STATE.checklist={};STATE.selViatura=null;STATE.homeLoaded=false;navigate('frota');loadFrotaData();})
       .catch(function(e){toast(e.message,'er');if(ok3){ok3.disabled=false;ok3.textContent='Confirmar Cautela';}});
   };
@@ -575,8 +575,8 @@ function bindFrota(){
 
 function loadFrotaData(){
   Promise.all([
-    api('GET','/api/frota/cautelas/ativas').catch(function(){return {data:[]};}),
-    api('GET','/api/frota/viaturas?status=disponivel').catch(function(){return {data:[]};})
+    api('GET','/api/mobile/cautelas/ativas').catch(function(){return {data:[]};}),
+    api('GET','/api/mobile/viaturas?status=disponivel').catch(function(){return {data:[]};})
   ]).then(function(rs){
     var todas=rs[0].data||[];
     var minha=todas.find(function(c){return c.motorista_id===STATE.agente.id;});
@@ -610,7 +610,7 @@ function showDescautela(){
     var km=document.getElementById('desc-km').value;
     if(!km){toast('Informe o KM final','er');return;}
     if(parseInt(km)<parseInt(c.km_inicial)){toast('KM final menor que o de saída','er');return;}
-    api('PUT','/api/frota/cautelas/'+c.id+'/encerrar',{km_final:parseInt(km),nivel_combustivel_final:selFuel||'',observacoes_retorno:document.getElementById('desc-obs').value})
+    api('PUT','/api/mobile/cautelas/'+c.id+'/encerrar',{km_final:parseInt(km),nivel_combustivel_final:selFuel||'',observacoes_retorno:document.getElementById('desc-obs').value})
       .then(function(){toast('Devolução registrada!');document.body.removeChild(body);STATE.cautelaAtiva=null;STATE.homeLoaded=false;navigate('frota');loadFrotaData();})
       .catch(function(e){toast(e.message,'er');});
   };
@@ -694,7 +694,7 @@ function showAbastecerSheet(){
     if(!vtId||!dt||!km||!lt||!vl){toast('Preencha todos os campos obrigatórios','er');return;}
     var btn=document.getElementById('ab-confirmar');
     btn.disabled=true;btn.textContent='Registrando...';
-    api('POST','/api/frota/abastecimentos',{
+    api('POST','/api/mobile/abastecimentos',{
       viatura_id:parseInt(vtId),data_abastecimento:dt,
       km_atual:parseInt(km),litros:parseFloat(lt),valor_total:parseFloat(vl),
       tipo_combustivel:selComb,
