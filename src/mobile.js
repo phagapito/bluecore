@@ -1113,7 +1113,9 @@ function showNovaPermuta(){
     '<div style="font-size:18px;font-weight:700;margin-bottom:4px">Solicitar Permuta</div>'+
     '<div style="font-size:12px;color:var(--gray);margin-bottom:18px">Limite: 2 permutas por mês</div>'+
     '<div class="form-group"><label class="form-label">Agente cedente</label>'+
-    '<select class="form-select" id="np-ced"><option value="">Selecione...</option>'+agOpts+'</select></div>'+
+    '<input type="text" id="np-ced-txt" class="form-input" placeholder="Buscar por nome, QRA ou funcional..." autocomplete="off" style="margin-bottom:4px"/>'+
+    '<div id="np-ced-drop" style="display:none;background:#fff;border:1px solid #d1d5db;border-radius:10px;max-height:200px;overflow-y:auto;margin-bottom:8px;box-shadow:0 4px 12px rgba(0,0,0,.1)"></div>'+
+    '<input type="hidden" id="np-ced"/></div>'+
     '<div style="background:var(--light);border-radius:12px;padding:12px 14px;margin-bottom:14px">'+
     '<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Meu turno que vou CEDER</div>'+
     '<div class="form-group"><label class="form-label">Data</label><input class="form-input" id="np-ds" type="date"/></div>'+
@@ -1129,6 +1131,23 @@ function showNovaPermuta(){
     '<button class="btn btn-outline" id="np-cancel" style="margin-top:10px">Cancelar</button>'+
   '</div>';
   document.body.appendChild(sheet);
+    // Buscador de agente cedente
+    (function(){
+      var txt=document.getElementById('np-ced-txt'),drop=document.getElementById('np-ced-drop'),hid=document.getElementById('np-ced');
+      function render(list){
+        drop.innerHTML=list.length?list.map(function(a){
+          var lbl=(a.qra||'--')+' - '+a.nome+' ['+a.funcional+']';
+          return '<div style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px" data-id="'+a.id+'" data-lbl="'+lbl.replace(/"/g,'&quot;')+'">'
+            +'<b style="color:#1A3A5C">'+(a.qra||'--')+'</b> '+a.nome+' <span style="color:#9ca3af;font-size:11px">['+a.funcional+']</span></div>';
+        }).join(''):'<div style="padding:10px;color:#9ca3af;font-size:12px;text-align:center">Nenhum resultado</div>';
+        drop.style.display='block';
+        drop.querySelectorAll('[data-id]').forEach(function(el){
+          el.ontouchstart=el.onmousedown=function(e){e.preventDefault();hid.value=el.dataset.id;txt.value=el.dataset.lbl;drop.style.display='none';};
+        });
+      }
+      txt.oninput=function(){hid.value='';var q=txt.value.toLowerCase().trim();if(!q){drop.style.display='none';return;}render(ags.filter(function(a){return(a.nome||'').toLowerCase().indexOf(q)>=0||(a.qra||'').toLowerCase().indexOf(q)>=0||(a.funcional||'').toLowerCase().indexOf(q)>=0;}).slice(0,20));};
+      txt.onblur=function(){setTimeout(function(){drop.style.display='none';},200);};
+    })();
     document.getElementById('np-cancel').onclick=function(){document.body.removeChild(sheet);};
     document.getElementById('np-ok').onclick=function(){
       var ced=document.getElementById('np-ced').value;

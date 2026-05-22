@@ -75,6 +75,11 @@ textarea{resize:none;height:80px}
 .modal-h{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb}
 .modal-t{font-size:15px;font-weight:600}
 .modal-x{background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af;line-height:1;padding:0}
+.agt-pick-wrap{position:relative}
+.agt-pick-in{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;outline:none;font-family:inherit}
+.agt-pick-in:focus{border-color:#2E75B6;box-shadow:0 0 0 2px rgba(46,117,182,.15)}
+.agt-pick-drop{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:9999;background:#fff;border:1px solid #d1d5db;border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.agt-pick-item{padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f3f4f6}.agt-pick-item:hover{background:#f0f7ff}.agt-pick-item:last-child{border-bottom:none}
 .modal-b{overflow-y:auto;padding:20px;flex:1}
 .modal-f{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid #e5e7eb}
 .pag{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #f3f4f6;font-size:12px;color:#6b7280}
@@ -167,6 +172,8 @@ var NIVEIS=['vazio','quarto','metade','tres_quartos','cheio'];
 var CK_ITEMS=['Pneus (4+estepe)','Lanternas e faros','Giroflex e sirene','Extintor valido','Radio comunicador','Kit primeiros socorros','Documentacao','Interior limpo'];
 function selOpts(opts,val){return opts.map(function(o){var v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(v)+'"'+(String(v)===String(val)?' selected':'')+'>'+esc(l)+'</option>';}).join('');}
 function field(label,inputHtml,full){return '<div class="f1'+(full?' full':'')+'"><label>'+label+'</label>'+inputHtml+'</div>';}
+function agtPickHtml(id,ph){return '<div class="agt-pick-wrap"><input type="text" id="ap-txt-'+id+'" class="agt-pick-in" placeholder="'+(ph||'Buscar por nome, QRA ou funcional...')+'" autocomplete="off"/><div id="ap-drop-'+id+'" class="agt-pick-drop" style="display:none"></div><input type="hidden" id="'+id+'"/></div>';}
+function initAgtPick(id,ags){var txt=document.getElementById('ap-txt-'+id),drop=document.getElementById('ap-drop-'+id),hid=document.getElementById(id);if(!txt||!drop||!hid)return;function render(list){drop.innerHTML=list.length?list.map(function(a){var lbl=(a.qra||'--')+' - '+a.nome+' ['+a.funcional+']';return '<div class="agt-pick-item" data-id="'+a.id+'" data-lbl="'+esc(lbl)+'"><b style="color:#1A3A5C">'+esc(a.qra||'--')+'</b> '+esc(a.nome)+' <span style="color:#6b7280">['+esc(a.funcional)+']</span></div>';}).join(''):'<div style="padding:10px;color:#9ca3af;font-size:12px;text-align:center">Nenhum resultado</div>';drop.style.display='block';drop.querySelectorAll('.agt-pick-item').forEach(function(el){el.onmousedown=function(e){e.preventDefault();hid.value=el.dataset.id;txt.value=el.dataset.lbl;drop.style.display='none';};});}txt.oninput=function(){hid.value='';var q=txt.value.toLowerCase().trim();if(!q){drop.style.display='none';return;}render(ags.filter(function(a){return(a.nome||'').toLowerCase().indexOf(q)>=0||(a.qra||'').toLowerCase().indexOf(q)>=0||(a.funcional||'').toLowerCase().indexOf(q)>=0;}).slice(0,25));};txt.onfocus=function(){if(txt.value&&!hid.value)txt.oninput.call(txt);};txt.onblur=function(){setTimeout(function(){drop.style.display='none';},180);};}
 function tableHtml(headers,rows){var h=headers.map(function(x){return '<th>'+x+'</th>';}).join('');var r=rows.length?rows.join(''):'<tr><td colspan="'+headers.length+'"><div class="empty">Nenhum registro.</div></td></tr>';return '<div class="card"><div style="overflow-x:auto"><table><thead><tr>'+h+'</tr></thead><tbody>'+r+'</tbody></table></div></div>';}
 function ph(title,sub,actHtml){return '<div class="ph"><div><div class="pt">'+esc(title)+'</div>'+(sub?'<div class="ps">'+esc(sub)+'</div>':'')+' </div>'+(actHtml?'<div class="pa">'+actHtml+'</div>':'')+' </div>';}
 function openModal(id,title,size,bodyHtml,footerHtml){closeModal(id);var ov=document.createElement('div');ov.className='overlay';ov.id='modal-'+id;ov.innerHTML='<div class="modal modal-'+(size||'md')+'"><div class="modal-h"><span class="modal-t">'+esc(title)+'</span><button class="modal-x">&times;</button></div><div class="modal-b">'+bodyHtml+'</div>'+(footerHtml?'<div class="modal-f">'+footerHtml+'</div>':'')+' </div>';ov.querySelector('.modal-x').onclick=function(){closeModal(id);};ov.onclick=function(e){if(e.target===ov)closeModal(id);};document.body.appendChild(ov);}
@@ -1049,12 +1056,13 @@ function armMovModal(){
     field('Tipo','<select id="mv-tipo"><option value="">Selecione</option><option value="entrada">Entrada</option><option value="saida">Saida</option></select>')+
     field('Quantidade','<input type="number" id="mv-qtd" min="1"/>')+
     field('Motivo','<select id="mv-motivo"><option value="">Selecione</option></select>')+
-    field('Agente (se cautela)','<select id="mv-agid"><option value="">Nenhum</option>'+selOpts(aOpts,'')+'</select>')+
+    field('Agente (se cautela)',agtPickHtml('mv-agid'))+
     field('Documento ref.','<input id="mv-doc"/>')+
     field('Observacoes','<textarea id="mv-obs"></textarea>',true)+
   '</div>';
   var footer='<button class="btn" id="mv-c">Cancelar</button><button class="btn btn-p" id="mv-ok">Confirmar</button>';
   openModal('mov','Registrar Movimentacao de Municao','md',body,footer);
+  initAgtPick('mv-agid',ARM.ags);
   document.getElementById('mv-c').onclick=function(){closeModal('mov');};
   document.getElementById('mv-tipo').onchange=function(){
     var tipo=this.value;
@@ -1203,7 +1211,7 @@ function armMovArmModal(arm){
   var body='<div class="fg">'+
     field('Armamento','<select id="mva-arm"><option value="">Selecione</option>'+selOpts(armOpts,preSelArm)+'</select>',true)+
     field('Tipo de movimentacao','<select id="mva-tipo"><option value="">Selecione</option>'+selOpts(tipoOptsIni,'')+'</select>',true)+
-    field('Agente (se cautela)','<select id="mva-agente"><option value="">Nenhum</option>'+selOpts(agsOpts,'')+'</select>')+
+    field('Agente (se cautela)',agtPickHtml('mva-agente'))+
     field('Observacoes','<input id="mva-obs" placeholder="Observacoes gerais..."/>',true)+
     '<div id="mva-apreensao-wrap" style="display:none;grid-column:span 2">'+
       '<div class="fg">'+
@@ -1245,6 +1253,7 @@ function armMovArmModal(arm){
   '</div>';
   var footer='<button class="btn" id="mva-c">Cancelar</button><button class="btn btn-p" id="mva-ok">Confirmar</button>';
   openModal('mva','Movimentar Armamento','lg',body,footer);
+  initAgtPick('mva-agente',ARM.ags);
   document.getElementById('mva-c').onclick=function(){closeModal('mva');};
   document.getElementById('mva-arm').onchange=function(){
     var selId=parseInt(this.value);
@@ -1603,11 +1612,12 @@ function granMovModal(){
     field('Granada / Artefato','<select id="gm-gran"><option value="">Selecione</option>'+selOpts(granOpts,'')+'</select>',true)+
     field('Tipo','<select id="gm-tipo">'+selOpts(tipoOpts,'saida')+'</select>',false)+
     field('Quantidade','<input type="number" id="gm-qtd" value="1" min="1"/>',false)+
-    field('Agente (se cautela)','<select id="gm-ag"><option value="">Nenhum</option>'+selOpts(agsOpts,'')+'</select>',false)+
+    field('Agente (se cautela)',agtPickHtml('gm-ag'),false)+
     field('Observacoes','<input id="gm-obs" placeholder="Motivo ou detalhe..."/>',true)+
   '</div>';
   var footer='<button class="btn" id="gm-c">Cancelar</button><button class="btn btn-p" id="gm-ok">Registrar</button>';
   openModal('gmov','Movimentar Granada / Artefato','md',body,footer);
+  initAgtPick('gm-ag',ARM.ags);
   document.getElementById('gm-c').onclick=function(){closeModal('gmov');};
   document.getElementById('gm-ok').onclick=function(){
     var gid=document.getElementById('gm-gran').value;
@@ -1627,7 +1637,7 @@ function cauMunModal(){
   var agsOpts=ARM.ags.map(function(a){return[a.id,a.nome+' ('+a.funcional+')'];});
   var estOpts=ARM.est.filter(function(e){return (!e.deposito||e.deposito==='ativo')&&e.quantidade_atual>0;}).map(function(e){return[e.id,e.calibre+' '+e.tipo+' (Disp: '+e.quantidade_atual+') - '+e.cofre];});
   var body='<div class="fg">'+
-    field('Agente','<select id="cm-ag"><option value="">Selecione</option>'+selOpts(agsOpts,'')+'</select>',true)+
+    field('Agente',agtPickHtml('cm-ag'),true)+
     field('Observacoes','<input id="cm-obs" placeholder="Motivo ou observacoes..."/>',true)+
   '</div>'+
   '<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:#1A3A5C;text-transform:uppercase;margin-bottom:8px">Itens da Cautela</div>'+
@@ -1639,6 +1649,7 @@ function cauMunModal(){
   '</div></div>';
   var footer='<button class="btn" id="cm-c">Cancelar</button><button class="btn btn-p" id="cm-ok">Registrar Cautela</button>';
   openModal('cmun','Nova Cautela de Municoes','lg',body,footer);
+  initAgtPick('cm-ag',ARM.ags);
   document.getElementById('cm-c').onclick=function(){closeModal('cmun');};
   document.getElementById('cm-ok').onclick=function(){
     var agId=document.getElementById('cm-ag').value;
@@ -2761,13 +2772,14 @@ function almMovModal(it){
   var tipoOpts=[['cautela','Cautela para Agente'],['devolucao','Devolucao'],['transferencia','Transferencia de setor'],['baixa','Baixa patrimonial']];
   var body='<div class="fg">'+
     field('Tipo de movimentacao','<select id="amv-t"><option value="">Selecione</option>'+selOpts(tipoOpts,'')+'</select>',true)+
-    field('Agente responsavel','<select id="amv-a"><option value="">Nenhum</option>'+selOpts(agsOpts,'')+'</select>')+
+    field('Agente responsavel',agtPickHtml('amv-a'))+
     field('Setor destino','<select id="amv-s"><option value="">Mesmo setor</option>'+selOpts(setOpts,'')+'</select>')+
     field('Prev. devolucao','<input type="date" id="amv-dt"/>')+
     field('Observacoes','<textarea id="amv-o"></textarea>',true)+
   '</div>';
   var footer='<button class="btn" id="amv-c">Cancelar</button><button class="btn btn-p" id="amv-ok">Confirmar</button>';
   openModal('amv','Movimentar - '+it.nome,'md',body,footer);
+  initAgtPick('amv-a',ALM.ags);
   document.getElementById('amv-c').onclick=function(){closeModal('amv');};
   document.getElementById('amv-ok').onclick=function(){
     var tipo=document.getElementById('amv-t').value;
